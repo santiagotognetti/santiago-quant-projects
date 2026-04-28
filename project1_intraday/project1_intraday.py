@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def simulate_intraday(n_days: int = 252, minutes_per_day: int = 390, seed: int = 42) -> pd.DataFrame:
+def simulate_intraday(n_days: int = 5000, minutes_per_day: int = 390, seed: int = 42) -> pd.DataFrame:
     """
     Simulate intraday microstructure data with causal structure:
     imbalance(t) predicts return(t+1).

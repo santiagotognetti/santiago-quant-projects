@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 np.random.seed(42)
 
-def simulate_cross_section(n_stocks=100, n_days=520):
+def simulate_cross_section(n_stocks=100, n_days=5200):
     mu = 0.0004 / 252
     sigma_market = 0.01 / np.sqrt(252)
     sigma_idio = 0.02 / np.sqrt(252)
@@ -40,7 +40,7 @@ def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bp
         top = mom_scores.nlargest(topk).index.tolist()
         bottom = mom_scores.nsmallest(topk).index.tolist()
 
-        pos = pd.Series(0, index=prices.columns)
+        pos = pd.Series(0.0, index=prices.columns)
         pos[top] = 1/len(top)
         pos[bottom] = -1/len(bottom)
 
