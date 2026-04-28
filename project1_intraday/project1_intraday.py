@@ -2,25 +2,34 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-np.random.seed(42)
-
-def simulate_intraday(n_days=8, minutes_per_day=390):
+def simulate_intraday(n_days: int = 252, minutes_per_day: int = 390, seed: int = 42) -> pd.DataFrame:
+    """
+    Simulate intraday microstructure data with causal structure:
+    imbalance(t) predicts return(t+1).
+    """
+    rng = np.random.default_rng(seed)
     N = n_days * minutes_per_day
-    sigma = 0.0008           # synthetic per-minute volatility
-    returns = np.random.normal(loc=0, scale=sigma, size=N)
+    sigma = 0.0008
+
+    imb_noise = rng.normal(scale=0.0006, size=N)
+    imbalance = np.zeros(N)
+    for t in range(1, N):
+        imbalance[t] = 0.7 * imbalance[t - 1] + imb_noise[t]  # AR(1) persistence
+    ret_noise = rng.normal(scale=sigma, size=N)
+    returns = np.zeros(N)
+    for t in range(1, N):
+        returns[t] = 0.25 * imbalance[t - 1] + ret_noise[t]
+
     midprice = 100 + np.cumsum(returns)
-    lead_return = np.concatenate([returns[1:], [0]])
-    imbalance = 0.5 * lead_return + np.random.normal(scale=0.0006, size=N)
     spread = 0.0005
-    timestamps = pd.date_range(start="2025-01-02 09:00", periods=N, freq='T')
-    df = pd.DataFrame({
+    timestamps = pd.date_range(start="2025-01-02 09:00", periods=N, freq='min')
+
+    return pd.DataFrame({
         "mid": midprice,
         "ret": returns,
-        "lead_ret": lead_return,
         "imbalance": imbalance,
         "spread": spread
     }, index=timestamps)
-    return df
 
 def signal_and_backtest(df, z_window=60, z_thresh=1.0, round_trip_cost=0.0005):
     # feature: rolling zscore of imbalance
