@@ -7,7 +7,7 @@ Project 2: Cross-Sectional Momentum (demo script)
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import pandas_datareader.data as web
 
 def simulate_cross_section(n_stocks=100, n_days=5200):
     rng = np.random.default_rng(42)
@@ -65,12 +65,29 @@ def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bp
     portfolio_rets = pd.concat(portfolio_rets)
     return portfolio_rets, positions_store
 
-def perf_stats(returns, freq='day'):
+def get_risk_free_rate(start: str, end: str) -> pd.Series:
+    """
+    Fetch daily 3-month T-bill rate from FRED (annualized, in decimal).
+    Ticker TB3MS.
+    """
+    rf = web.DataReader('TB3MS', 'fred', start, end)['TB3MS']
+    rf = rf / 100
+    rf = rf.resample('B').ffill()
+    return rf / 252
+
+def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None):
     if freq == 'day':
         ann_factor = 252
     else:
         ann_factor = 1
-    mean = returns.mean() * ann_factor
+
+    if rf is not None:
+        rf_aligned = rf.reindex(returns.index).fillna(method='ffill').fillna(0)
+    else:
+        rf_aligned = pd.Series(0.0, index=returns.index)
+
+    excess_returns = returns - rf_aligned
+    mean = (1 + excess_returns.mean())**252 - 1
     vol = returns.std() * np.sqrt(ann_factor)
     sharpe = mean / vol if vol > 0 else np.nan
     cum = (1 + returns).cumprod() - 1
@@ -104,7 +121,7 @@ def run_demo():
 
     # print first rebalance positions
     print("\nSample positions (first rebalance):")
-    print(positions[0].loc[positions[0] != 0].sort_values(ascending=False).to_string())
+    print(positions[0].loc[positions[0] != 0].sort_values(ascending=True).to_string())
 
 if __name__ == "__main__":
     run_demo()
