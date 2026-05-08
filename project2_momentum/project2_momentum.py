@@ -23,7 +23,7 @@ def simulate_cross_section(n_stocks=100, n_days=5200):
     df_prices = pd.DataFrame(prices, index=dates, columns=[f"S{i}" for i in range(n_stocks)])
     return df_prices
 
-def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bps=0.001):
+def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bps=0.0025):
     rets = prices.pct_change().fillna(0)
     momentum = prices.pct_change(periods=lookback).shift(rebalance_period).fillna(0)
 
