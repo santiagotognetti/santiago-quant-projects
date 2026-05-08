@@ -8,15 +8,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-np.random.seed(42)
 
 def simulate_cross_section(n_stocks=100, n_days=5200):
+    rng = np.random.default_rng(42)
     mu = 0.0004 / 252
     sigma_market = 0.01 / np.sqrt(252)
     sigma_idio = 0.02 / np.sqrt(252)
+    stock_drifts = rng.uniform(-0.0003, 0.0003, size=n_stocks)
     market = np.random.normal(loc=mu, scale=sigma_market, size=n_days)
     idios = np.random.normal(loc=0, scale=sigma_idio, size=(n_days, n_stocks))
-    returns = market.reshape(-1,1) + idios
+    returns = market.reshape(-1, 1) + idios + stock_drifts.reshape(1, -1)
     prices = 100 * np.exp(np.cumsum(returns, axis=0))
     dates = pd.date_range(start="2023-01-02", periods=n_days, freq='B')
     df_prices = pd.DataFrame(prices, index=dates, columns=[f"S{i}" for i in range(n_stocks)])
