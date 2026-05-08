@@ -25,7 +25,7 @@ def simulate_cross_section(n_stocks=100, n_days=5200):
 
 def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bps=0.001):
     rets = prices.pct_change().fillna(0)
-    momentum = prices.pct_change(periods=lookback).shift(1).fillna(0)
+    momentum = prices.pct_change(periods=lookback).shift(rebalance_period).fillna(0)
 
     rebalance_days = list(range(0, len(prices), rebalance_period))
     portfolio_rets = []
