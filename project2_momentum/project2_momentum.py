@@ -91,14 +91,14 @@ def get_risk_free_rate(start: str, end: str) -> pd.Series:
     rf = rf.resample('B').ffill()
     return rf / 252
 
-def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None):
+def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None, turnover = 0, rebalance_period = 21):
     if freq == 'day':
         ann_factor = 252
     else:
         ann_factor = 1
 
     if rf is not None:
-        rf_aligned = rf.reindex(returns.index).fillna(method='ffill').fillna(0)
+        rf_aligned = rf.reindex(returns.index).ffill().fillna(0)
     else:
         rf_aligned = pd.Series(0.0, index=returns.index)
 
@@ -108,27 +108,31 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
     sharpe = mean / vol if vol > 0 else np.nan
     cum = (1 + returns).cumprod() - 1
     maxdd = (cum.cummax() - cum).max()
+    ann_turnover = np.mean(turnover) * (252 / rebalance_period)
     return {
         "annualized_return": mean,
         "annualized_vol": vol,
         "sharpe": sharpe,
         "cumulative_return": cum.iloc[-1],
-        "max_drawdown": maxdd
+        "max_drawdown": maxdd,
+        "annual turnover": ann_turnover,
     }
 
 def run_demo():
-    prices = simulate_cross_section(n_stocks=100, n_days=520)
-    port_rets, positions = momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bps=0.001)
-    stats = perf_stats(port_rets, freq='day')
-
+    tickers = get_sp500_tickers(n=500)
+    prices = load_prices(tickers, start="2010-01-01", end="2024-12-31")
+    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=25, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
+    rf = get_risk_free_rate(start="2010-01-01", end="2024-12-31")
+    stats = perf_stats(port_rets, freq='day', rf=rf, turnover=turnover, rebalance_period=21)
     cum = (1 + port_rets).cumprod() - 1
-    print("Project 2 Performance (Synthetic):")
+    print("Project 2 Performance:")
     for k,v in stats.items():
         print(f"  {k}: {v:.6f}")
 
+
     plt.figure(figsize=(10,4))
     plt.plot(cum.index, cum.values)
-    plt.title("Project2 (Synthetic): Cross-Sectional Momentum Cumulative Return")
+    plt.title("Project2: Cross-Sectional Momentum Cumulative Return")
     plt.xlabel("Date")
     plt.ylabel("Cumulative return")
     plt.grid(True)
