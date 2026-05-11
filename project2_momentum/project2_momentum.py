@@ -23,7 +23,7 @@ def simulate_cross_section(n_stocks=100, n_days=5200):
     df_prices = pd.DataFrame(prices, index=dates, columns=[f"S{i}" for i in range(n_stocks)])
     return df_prices
 
-def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bps=0.0025):
+def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, max_weight):
     rets = prices.pct_change().fillna(0)
     momentum = prices.pct_change(periods=lookback).shift(rebalance_period).fillna(0)
 
@@ -32,7 +32,7 @@ def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bp
     turnover = []
     positions_store = []
 
-    prev_pos = pd.Series(0, index=prices.columns)
+    prev_pos = pd.Series(0.0, index=prices.columns)
 
     for i in rebalance_days[:-1]:
         start = i
@@ -41,12 +41,28 @@ def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bp
         top = mom_scores.nlargest(topk).index.tolist()
         bottom = mom_scores.nsmallest(topk).index.tolist()
 
-        pos = pd.Series(0.0, index=prices.columns)
-        pos[top] = 1/len(top)
-        pos[bottom] = -1/len(bottom)
+
+        long_scores = mom_scores[top].clip(lower=0)
+        short_scores = mom_scores[bottom].clip(upper=0).abs()
+        long_weights = long_scores / long_scores.sum() if long_scores.sum() > 0 else pd.Series(1 / len(top), index=top)
+        short_weights = short_scores / short_scores.sum() if short_scores.sum() > 0 else pd.Series(1 / len(bottom), index=bottom)
+        long_weights = (long_weights.clip(upper=max_weight))
+        long_weights = long_weights / long_weights.sum()
+
+        short_weights = (short_weights.clip(upper=max_weight))
+        short_weights = short_weights / short_weights.sum()
+
+        pos = pd.Series(0.0, index=prices.columns)  # ← defined here, too late
+
+        pos[top] = long_weights
+        pos[bottom] = -short_weights
+
+
 
         # turnover proportional to changes in absolute position
-        tr = (pos.subtract(prev_pos).abs()).sum() / 2.0  # fraction of portfolio turned
+
+        gross_exposure = pos.abs().sum() + prev_pos.abs().sum()
+        tr = (pos.subtract(prev_pos).abs()).sum() / gross_exposure if gross_exposure > 0 else 0.0
         turnover.append(tr)
 
         # apply daily returns for holding period
@@ -54,7 +70,7 @@ def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bp
         daily_port_returns = (period_rets * pos).sum(axis=1)
 
         # simple transaction cost hit on rebalance (applied once per rebalance)
-        tc = tr * tc_bps
+        tc = tr * tc_per_unit
         # subtract amortized cost over holding period simply (quick demo)
         daily_port_returns = daily_port_returns - tc / max(1, (end - start))
 
@@ -63,7 +79,7 @@ def momentum_long_short(prices, lookback=60, topk=10, rebalance_period=21, tc_bp
         prev_pos = pos.copy()
 
     portfolio_rets = pd.concat(portfolio_rets)
-    return portfolio_rets, positions_store
+    return portfolio_rets, positions_store, turnover
 
 def get_risk_free_rate(start: str, end: str) -> pd.Series:
     """
