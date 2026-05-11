@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pandas_datareader.data as web
 
-def simulate_cross_section(n_stocks=100, n_days=5200):
+def simulate_cross_section(n_stocks=500, n_days=5200):
     rng = np.random.default_rng(42)
     mu = 0.0004 / 252
     sigma_market = 0.01 / np.sqrt(252)
@@ -119,8 +119,7 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
     }
 
 def run_demo():
-    tickers = get_sp500_tickers(n=500)
-    prices = load_prices(tickers, start="2010-01-01", end="2024-12-31")
+    prices = simulate_cross_section()
     port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=25, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
     rf = get_risk_free_rate(start="2010-01-01", end="2024-12-31")
     stats = perf_stats(port_rets, freq='day', rf=rf, turnover=turnover, rebalance_period=21)
