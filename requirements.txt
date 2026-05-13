@@ -1,5 +1,9 @@
-numpy
-pandas
-matplotlib
-scipy
-statsmodels
+# Project 2 — Cross-Sectional Momentum Strategy
+# Python 3.11+
+
+pandas>=2.0
+numpy>=1.26
+matplotlib>=3.8
+yfinance>=0.2.40
+pandas-datareader>=0.10
+statsmodels>=0.14
