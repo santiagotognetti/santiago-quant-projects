@@ -80,7 +80,7 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
         short_weights = (short_weights.clip(upper=max_weight))
         short_weights = short_weights / short_weights.sum()
 
-        pos = pd.Series(0.0, index=prices.columns)  # ← defined here, too late
+        pos = pd.Series(0.0, index=prices.columns)  
 
         pos[top] = long_weights
         pos[bottom] = -short_weights
