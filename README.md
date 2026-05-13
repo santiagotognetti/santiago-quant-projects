@@ -48,7 +48,7 @@ Includes:
 - Lookback sensitivity analysis across 8 horizons (21 → 378 days)
 - CAPM factor decomposition (alpha, beta, R²)
 - Equal-weight long-only benchmark comparison
-- Performance analytics: Sharpe, Sortino, annualised return, max drawdown,
+- Performance analytics: Sharpe, Sortino, Calmar, annualised return, max drawdown,
   annualised turnover
 
 **Core Idea:**  
@@ -56,6 +56,8 @@ Stocks that have outperformed over the past 6–12 months tend to continue
 outperforming over the next month (Jegadeesh & Titman, 1993). This project
 implements a market-neutral (dollar-neutral; beta not explicitly hedged) version of that signal on European equities and
 evaluates whether the premium survives realistic trading frictions.
+Note: universe is subject to survivorship bias — only current STOXX Europe 600 constituents are included.
+
 
 **How to run:**
 
@@ -88,8 +90,10 @@ python project2_momentum/run_sensitivity.py
 | Annualised Return | 0.49% | 8.68% |
 | Annualised Volatility | 19.47% | 11.78% |
 | Sharpe Ratio | 0.03 | 0.74 |
+| Sortino | 0.04 | 1.02 |
+| Calmar | 0.02 | 0.53 |
 | Cumulative Return | 1.22% | 21.83% |
-| Max Drawdown | 34.81% | 17.78% |
+| Max Drawdown | 28.52% | 16.37% |
 | Annual Turnover | 4.87× | — |
 
 The out-of-sample period (2018–2020) coincides with two well-documented momentum
@@ -111,16 +115,16 @@ analysis section.
 The strategy was evaluated across eight lookback horizons to identify the
 optimal momentum formation period before the out-of-sample test window. In-sample (2010–2018), the strategy achieved a Sharpe of 1.08 at a 189-day lookback with 30% annualised return net of costs.
 
-| Lookback (days) | Lookback (months) | Sharpe | Ann. Return | Max Drawdown | Ann. Turnover |
-|---|---|---|---|---|---|
-| 21 | 1 | –0.11 | –2.59% | 75.60% | 11.01× |
-| 42 | 2 | 0.56 | 14.12% | 89.00% | 8.35× |
-| 62 | 3 | 0.80 | 20.56% | 79.91% | 7.02× |
-| 126 | 6 | 1.05 | 29.51% | 155.43% | 4.98× |
-| **189** | **9** | **1.08** | **30.02%** | **91.17%** | **3.93×** |
-| 252 | 12 | 1.01 | 27.18% | 156.86% | 3.19× |
-| 315 | 15 | 0.71 | 18.30% | 97.92% | 2.90× |
-| 378 | 18 | 0.45 | 11.50% | 63.52% | 2.56× |
+| Lookback (days) | Months | Sharpe | Sortino | Calmar | Ann. Return | Max Drawdown | Ann. Turnover |
+|---|---|---|---|---|---|---|---|
+| 21 | 1 | –0.11 | –0.15 | –0.04 | –2.59% | 61.93% | 11.01× |
+| 42 | 2 | 0.56 | 0.80 | 0.36 | 14.12% | 38.95% | 8.35× |
+| 62 | 3 | 0.80 | 1.11 | 0.65 | 20.56% | 31.59% | 7.02× |
+| 126 | 6 | 1.05 | 1.50 | 0.95 | 29.51% | 31.01% | 4.98× |
+| **189** | **9** | **1.08** | **1.56** | **0.90** | **30.02%** | **33.37%** | **3.93×** |
+| 252 | 12 | 1.01 | 1.45 | 0.79 | 27.18% | 34.24% | 3.19× |
+| 315 | 15 | 0.71 | 1.04 | 0.63 | 18.30% | 28.86% | 2.90× |
+| 378 | 18 | 0.45 | 0.66 | 0.36 | 11.50% | 32.09% | 2.56× |
 
 The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.08,
 consistent with the Jegadeesh & Titman (1993) finding that intermediate-horizon
@@ -148,6 +152,8 @@ applied without modification to the out-of-sample test period (2018–2020).
 ### Email: tognettisantiago@gmail.com
 ### GitHub: https://github.com/gomerfield/
 
+
+--
 
 **Future Work**
 
