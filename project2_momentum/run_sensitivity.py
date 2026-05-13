@@ -16,15 +16,15 @@ def lookback_sensitivity(
     rf: pd.Series | None = None,
 ) -> pd.DataFrame:
     """
-
-    :param prices:
-    :param lookback_grid:
-    :param topk:
-    :param rebalance_period:
-    :param tc_per_unit:
-    :param max_weight:
-    :param rf:
-    :return:
+    Computes sensitivity to lookback period parameter out of a set of options.
+    :param prices: stock prices in the considered universe
+    :param lookback_grid: hardcoded typical lookback period options
+    :param topk: number of stocks picked (long and short)
+    :param rebalance_period: periodicity of rebalancing
+    :param tc_per_unit: transactional costs
+    :param max_weight: maximum allowed weight for a single stock in the portfolio
+    :param rf: risk free rate
+    :return: sensitivity parameter for lookback period
     """
     results = []
 
@@ -45,10 +45,12 @@ def lookback_sensitivity(
 
 def plot_lookback_sensitivity(sens_df: pd.DataFrame, save_path: str = None):
     """
-
-    :param sens_df:
-    :param save_path:
-    :return:
+    Plots sensitivity to lookback period parameter out of a set of options
+    (1, 2, 3, 6, 9, 12, 15 and 18 months)
+    Shows the best option based on Sharpe ratio
+    :param sens_df: parameters that captures lookback period sensitivity
+    :param save_path: for saving or showing the file, default is showing
+    :return: plot
     """
     metrics = {
         "sharpe":"Sharpe Ratio",
