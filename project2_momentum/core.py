@@ -90,7 +90,7 @@ def get_risk_free_rate(start: str, end: str) -> pd.Series:
     rf = rf.resample('B').ffill()
     return rf / 252
 
-def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None, turnover = 0, rebalance_period = 21):
+def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None, turnover=0, rebalance_period=21):
     """
     Creates stats study performance purposes.
 
@@ -113,16 +113,26 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
         rf_aligned = pd.Series(0.0, index=returns.index)
 
     excess_returns = returns - rf_aligned
-    mean = (1 + excess_returns.mean())**252 - 1
+    mean = (1 + excess_returns.mean()) ** 252 - 1
     vol = returns.std() * np.sqrt(ann_factor)
     sharpe = mean / vol if vol > 0 else np.nan
+
+    # Sortino — downside deviation only (returns below rf)
+    downside = excess_returns[excess_returns < 0]
+    downside_vol = downside.std() * np.sqrt(ann_factor) if len(downside) > 1 else np.nan
+    sortino = mean / downside_vol if downside_vol and downside_vol > 0 else np.nan
+
     cum = (1 + returns).cumprod() - 1
     maxdd = (cum.cummax() - cum).max()
     ann_turnover = np.mean(turnover) * (252 / rebalance_period)
+    calmar = mean / maxdd if maxdd > 0 else np.nan
+
     return {
         "annualized_return": mean,
         "annualized_vol": vol,
         "sharpe": sharpe,
+        "sortino": sortino,
+        "calmar": calmar,  # ← new
         "cumulative_return": cum.iloc[-1],
         "max_drawdown": maxdd,
         "annual turnover": ann_turnover,
