@@ -126,18 +126,19 @@ optimal momentum formation period before the out-of-sample test window. In-sampl
 | 315 | 15 | 0.71 | 1.04 | 0.63 | 18.30% | 28.86% | 2.90× |
 | 378 | 18 | 0.45 | 0.66 | 0.36 | 11.50% | 32.09% | 2.56× |
 
-The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.08,
-consistent with the Jegadeesh & Titman (1993) finding that intermediate-horizon
-momentum (6–12 months) dominates short and long-term horizons. The 1-month
-lookback produces negative returns, capturing short-term reversal rather than
-momentum — a well-known empirical regularity. Turnover declines monotonically
-with lookback length, as longer formation windows generate more stable rankings
-and require fewer position changes at each rebalance.
+The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.08
+and Sortino at 1.56, consistent with the Jegadeesh & Titman (1993) finding that
+intermediate-horizon momentum (6–12 months) dominates short and long-term
+horizons. The 1-month lookback produces negative returns across all three
+risk-adjusted metrics, capturing short-term reversal rather than momentum — a
+well-known empirical regularity. Turnover declines monotonically with lookback
+length, as longer formation windows generate more stable rankings and require
+fewer position changes at each rebalance.
 
-The 6-month and 12-month lookbacks show suspiciously high max drawdown values
-(>150%), which warrants investigation — this may reflect a period of concentrated
-position flipping during a single drawdown episode rather than a structural
-weakness of those horizons.
+Note that the Calmar ratio peaks at 6 months (0.95) rather than 9 months (0.90),
+reflecting a slightly lower max drawdown at that horizon. The 9-month lookback
+was selected on Sharpe as the primary criterion; a practitioner weighting
+drawdown control more heavily might prefer 6 months.
 
 The optimal lookback (189 days) was selected purely on in-sample Sharpe and
 applied without modification to the out-of-sample test period (2018–2020).
