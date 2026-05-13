@@ -49,3 +49,6 @@ def run_european():
     # print first rebalance positions
     print("\nSample positions (first rebalance):")
     print(positions[0].loc[positions[0] != 0].sort_values(ascending=True).to_string())
+
+if __name__ == "__main__":
+    run_european()
