@@ -79,7 +79,7 @@ def plot_lookback_sensitivity(sens_df: pd.DataFrame, save_path: str = None):
     else:
         plt.show()
 
-def run_sensitivy_analysis():
+def run_sensitivy():
     DATA_PATH = Path(__file__).parent / "Data" / "EUMD_holdings.csv"
     start = "2000-01-01"
     end = dt.date.today()
@@ -126,3 +126,6 @@ def run_sensitivy_analysis():
     # print first rebalance positions
     print("\nSample positions (first rebalance):")
     print(positions[0].loc[positions[0] != 0].sort_values(ascending=True).to_string())
+
+if __name__ == "__main__":
+    run_sensitivy()
