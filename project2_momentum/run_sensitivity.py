@@ -82,7 +82,7 @@ def plot_lookback_sensitivity(sens_df: pd.DataFrame, save_path: str = None):
 def run_sensitivity():
     DATA_PATH = Path(__file__).parent / "Data" / "EUMD_holdings.csv"
     start = "2010-01-01"
-    end = dt.date.today()
+    end = "2018-01-01"
     TOPK = 10
     tickers = get_tickers(DATA_PATH)
     prices = load_prices(tickers, start, end)

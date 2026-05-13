@@ -8,18 +8,23 @@ from data import get_tickers, load_prices
 
 def run_european():
     DATA_PATH = Path(__file__).parent / "Data" / "EUMD_holdings.csv"
-    start = "2010-01-01"
-    end = dt.date.today()
+    start_download = "2016-06-01"
+    start_eval = "2018-01-01"
+    end = "2020-01-01"
     tickers = get_tickers(DATA_PATH)
-    prices = load_prices(tickers, start, end)
-    rf = get_risk_free_rate(start=start, end=end)
+    prices = load_prices(tickers, start_download, end)
+    rf = get_risk_free_rate(start=start_download, end=end)
 
     # Momentum strategy
-    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=10, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
+    port_rets, positions, turnover = momentum_long_short(prices, lookback=189, topk=10, rebalance_period=21, tc_per_unit=0.001, max_weight=1)
 
     # Long only, equal weight benchmark
     bmark_rets = benchmark_long_only_equal_weight(prices)
 
+    # slicing for actual period of testing
+    port_rets = port_rets[start_eval:]
+    bmark_rets = benchmark_long_only_equal_weight(prices)[start_eval:]
+    rf = rf[start_eval:]
     # Stats reporting
     stats_port = perf_stats(port_rets, freq='day',
                             rf=rf, turnover=turnover, rebalance_period=21)
