@@ -12,8 +12,8 @@ import pandas_datareader.data as web
 def simulate_cross_section(n_stocks=500, n_days=5200):
     rng = np.random.default_rng(42)
     mu = 0.0004 / 252
-    sigma_market = 0.01 / np.sqrt(252)
-    sigma_idio = 0.02 / np.sqrt(252)
+    sigma_market = 0.15 / np.sqrt(252)
+    sigma_idio = 0.20 / np.sqrt(252)
     stock_drifts = rng.uniform(-0.0003, 0.0003, size=n_stocks)
     market = np.random.normal(loc=mu, scale=sigma_market, size=n_days)
     idios = np.random.normal(loc=0, scale=sigma_idio, size=(n_days, n_stocks))
@@ -25,7 +25,8 @@ def simulate_cross_section(n_stocks=500, n_days=5200):
 
 def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, max_weight):
     rets = prices.pct_change().fillna(0)
-    momentum = prices.pct_change(periods=lookback).shift(rebalance_period).fillna(0)
+    skip_days = 21
+    momentum = prices.pct_change(periods=lookback).shift(skip_days).fillna(0)
 
     rebalance_days = list(range(0, len(prices), rebalance_period))
     portfolio_rets = []
@@ -37,7 +38,7 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
     for i in rebalance_days[:-1]:
         start = i
         end = min(i+rebalance_period, len(prices)-1)
-        mom_scores = momentum.iloc[start]
+        mom_scores = momentum.iloc[start].dropna()
         top = mom_scores.nlargest(topk).index.tolist()
         bottom = mom_scores.nsmallest(topk).index.tolist()
 
@@ -117,6 +118,11 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
         "max_drawdown": maxdd,
         "annual turnover": ann_turnover,
     }
+def benchmark():
+    
+
+
+
 
 def run_demo():
     prices = simulate_cross_section()
