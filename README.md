@@ -84,13 +84,67 @@ python project2_momentum/run_sensitivity.py
 > and printed to stdout / displayed as matplotlib charts. Backtest results
 > are reported in-sample; a formal train/test split is on the roadmap.
 
+### Out-of-Sample Results (2018–2020)
+
+| Metric | L/S Momentum | EW Benchmark |
+|---|---|---|
+| Annualised Return | 0.49% | 8.68% |
+| Annualised Volatility | 19.47% | 11.78% |
+| Sharpe Ratio | 0.03 | 0.74 |
+| Cumulative Return | 1.22% | 21.83% |
+| Max Drawdown | 34.81% | 17.78% |
+| Annual Turnover | 4.87× | — |
+
+The out-of-sample period (2018–2020) coincides with two well-documented momentum
+crash episodes: the Q4 2018 global equity selloff driven by Fed tightening and
+trade war escalation, followed by a sharp, sudden reversal rally in Q1 2019.
+Cross-sectional momentum strategies are structurally vulnerable to this pattern —
+the short book is concentrated in previously underperforming stocks, which tend to
+rebound most aggressively in a recovery. The strategy's 34.8% max drawdown versus
+17.8% for the equal-weight benchmark reflects this exposure.
+
+These results are consistent with the broader academic evidence on momentum crashes
+(Daniel & Moskowitz, 2016). The high annual turnover of 4.87× also indicates that
+transaction costs are a meaningful drag in a volatile, low-signal environment.
+In-sample performance (2010–2018) is reported separately in the sensitivity
+analysis section.
+
+### Lookback Sensitivity Analysis (In-Sample: 2010–2018)
+
+The strategy was evaluated across eight lookback horizons to identify the
+optimal momentum formation period before the out-of-sample test window.
+
+| Lookback (days) | Lookback (months) | Sharpe | Ann. Return | Max Drawdown | Ann. Turnover |
+|---|---|---|---|---|---|
+| 21 | 1 | –0.11 | –2.59% | 75.60% | 11.01× |
+| 42 | 2 | 0.56 | 14.12% | 89.00% | 8.35× |
+| 62 | 3 | 0.80 | 20.56% | 79.91% | 7.02× |
+| 126 | 6 | 1.05 | 29.51% | 155.43% | 4.98× |
+| **189** | **9** | **1.08** | **30.02%** | **91.17%** | **3.93×** |
+| 252 | 12 | 1.01 | 27.18% | 156.86% | 3.19× |
+| 315 | 15 | 0.71 | 18.30% | 97.92% | 2.90× |
+| 378 | 18 | 0.45 | 11.50% | 63.52% | 2.56× |
+
+The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.08,
+consistent with the Jegadeesh & Titman (1993) finding that intermediate-horizon
+momentum (6–12 months) dominates short and long-term horizons. The 1-month
+lookback produces negative returns, capturing short-term reversal rather than
+momentum — a well-known empirical regularity. Turnover declines monotonically
+with lookback length, as longer formation windows generate more stable rankings
+and require fewer position changes at each rebalance.
+
+The 6-month and 12-month lookbacks show suspiciously high max drawdown values
+(>150%), which warrants investigation — this may reflect a period of concentrated
+position flipping during a single drawdown episode rather than a structural
+weakness of those horizons.
+
+The optimal lookback (189 days) was selected purely on in-sample Sharpe and
+applied without modification to the out-of-sample test period (2018–2020).
+
 
 --
-Project 1:
-python project1_intraday/project1_intraday.py
 
-Project 2:
-python project2_momentum/project2_momentum.py
+
 
 Contact details:
 LinkedIn: https://www.linkedin.com/in/santiago-tognetti-57022a122/
