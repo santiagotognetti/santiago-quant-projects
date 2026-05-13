@@ -1,13 +1,15 @@
 """
 Project 2: Cross-Sectional Momentum (demo script)
 - Synthetic-data demo included. Replace with real price data (yfinance, exchange CSVs).
-- Strategy: monthly rebalanced long-top / short-bottom on 60-day momentum.
+- Strategy: monthly rebalanced long-top / short-bottom on n-day momentum.
 """
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pandas_datareader.data as web
+import datetime as dt
+
 
 def simulate_cross_section(n_stocks=500, n_days=5200):
     rng = np.random.default_rng(42)
@@ -19,7 +21,7 @@ def simulate_cross_section(n_stocks=500, n_days=5200):
     idios = np.random.normal(loc=0, scale=sigma_idio, size=(n_days, n_stocks))
     returns = market.reshape(-1, 1) + idios + stock_drifts.reshape(1, -1)
     prices = 100 * np.exp(np.cumsum(returns, axis=0))
-    dates = pd.date_range(start="2023-01-02", periods=n_days, freq='B')
+    dates = pd.date_range(start="2010-01-01", periods=n_days, freq='B')
     df_prices = pd.DataFrame(prices, index=dates, columns=[f"S{i}" for i in range(n_stocks)])
     return df_prices
 
@@ -118,29 +120,52 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
         "max_drawdown": maxdd,
         "annual turnover": ann_turnover,
     }
-def benchmark():
-    
+def benchmark_long_only_equal_weight(prices: pd.DataFrame):
+    """
+       Long-only equal-weight benchmark over the same universe and date range
+       as the momentum strategy. Rebalances monthly to maintain equal weights.
+       No transaction costs applied (benchmark assumed frictionless).
 
-
-
+       Returns daily portfolio returns as a pd.Series.
+       """
+    rets = prices.pct_change().fillna(0)
+    n = prices.shape[1]
+    weight = 1.0 / n
+    return rets.mul(weight).sum(axis=1)
 
 def run_demo():
-    prices = simulate_cross_section()
-    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=25, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
-    rf = get_risk_free_rate(start="2010-01-01", end="2024-12-31")
-    stats = perf_stats(port_rets, freq='day', rf=rf, turnover=turnover, rebalance_period=21)
-    cum = (1 + port_rets).cumprod() - 1
-    print("Project 2 Performance:")
-    for k,v in stats.items():
-        print(f"  {k}: {v:.6f}")
+    start = "2000-01-01"
+    end = dt.date.today()
+    prices = simulate_cross_section(n_stocks=500, n_days=5200)
+    rf = get_risk_free_rate(start=start, end=end)
 
+    # Momentun strategy
+    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=10, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
 
-    plt.figure(figsize=(10,4))
-    plt.plot(cum.index, cum.values)
-    plt.title("Project2: Cross-Sectional Momentum Cumulative Return")
+    # Long only, equal weight benchmark
+    bmark_rets = benchmark_long_only_equal_weight(prices)
+
+    # Stats reporting
+    stats_port = perf_stats(port_rets, freq='day',
+                            rf=rf, turnover=turnover, rebalance_period=21)
+    stats_bmark = perf_stats(bmark_rets, freq='day', rf=rf, turnover=[0], rebalance_period=21)
+    print(f"{'Metric':<22} {'Momentum':>12} {'EW Benchmark':>14}")
+    print(""*50)
+    for k in stats_port:
+        print(f" {k:<20} {stats_port[k]:>12.4f} {stats_bmark[k]:>14.4f}")
+
+    cum_port = (1 + port_rets).cumprod() - 1
+    cum_bmark = (1 + bmark_rets).cumprod()
+
+    plt.figure(figsize=(11, 4))
+    plt.plot(cum_port.index, cum_port.values, label="L/S Momentum", linewidth=2)
+    plt.plot(cum_bmark.index, cum_bmark.values, label="EW Benchmark", linewidth=1.5,
+             linestyle="--", color="gray")
+    plt.title("Project 2: Momentum vs Equal-Weight Benchmark")
     plt.xlabel("Date")
-    plt.ylabel("Cumulative return")
-    plt.grid(True)
+    plt.ylabel("Growth of $1")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
 
