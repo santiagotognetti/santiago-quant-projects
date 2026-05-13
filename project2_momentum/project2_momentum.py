@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pandas_datareader.data as web
 import datetime as dt
+import statsmodels.api as sm
 
 
 def simulate_cross_section(n_stocks=500, n_days=5200):
@@ -28,7 +29,7 @@ def simulate_cross_section(n_stocks=500, n_days=5200):
 def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, max_weight):
     rets = prices.pct_change().fillna(0)
     skip_days = 21
-    momentum = prices.pct_change(periods=lookback).shift(skip_days).fillna(0)
+    momentum = prices.pct_change(periods=lookback).shift(skip_days)
 
     rebalance_days = list(range(0, len(prices), rebalance_period))
     portfolio_rets = []
@@ -41,6 +42,11 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
         start = i
         end = min(i+rebalance_period, len(prices)-1)
         mom_scores = momentum.iloc[start].dropna()
+
+        if len(mom_scores) < 2 * topk:
+            prev_pos = pd.Series(0.0, index=prices.columns)
+            continue
+
         top = mom_scores.nlargest(topk).index.tolist()
         bottom = mom_scores.nsmallest(topk).index.tolist()
 
@@ -120,6 +126,51 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
         "max_drawdown": maxdd,
         "annual turnover": ann_turnover,
     }
+
+def factor_decomposition(port_rets: pd.Series, bmark_rets: pd.Series,
+                         rf: pd.Series) -> dict:
+    """
+    Regress strategy excess returns on market excess returns (CAPM).
+    Reports alpha, beta, R-squared and t-stats.
+    For a proper Fama-French decomposition, replace market_excess
+    with a DataFrame of [MKT, SMB, HML] factors.
+    """
+
+    rf_aligned     = rf.reindex(port_rets.index).ffill().fillna(0)
+    mkt_aligned    = bmark_rets.reindex(port_rets.index).ffill().fillna(0)
+
+    port_excess = port_rets - rf_aligned
+    mkt_excess  = mkt_aligned - rf_aligned
+
+    X = sm.add_constant(mkt_excess)
+    model = sm.OLS(port_excess, X).fit()
+
+    alpha_daily = model.params["const"]
+    beta        = model.params.iloc[1]
+    alpha_ann   = (1 + alpha_daily) ** 252 - 1
+
+    print("\n--- CAPM Factor Decomposition ---")
+    print(f"  Annualized Alpha : {alpha_ann:.4f}  (t = {model.tvalues['const']:.2f}, "
+          f"p = {model.pvalues['const']:.3f})")
+    print(f"  Market Beta      : {beta:.4f}       (t = {model.tvalues.iloc[1]:.2f})")
+    print(f"  R-squared        : {model.rsquared:.4f}")
+    print(f"  Observations     : {int(model.nobs)}")
+    print()
+    print("  Interpretation:")
+    if model.pvalues["const"] < 0.05:
+        print(f"  ✓ Alpha is statistically significant — strategy adds value beyond market exposure.")
+    else:
+        print(f"  ✗ Alpha is NOT significant — returns are explained by market beta alone.")
+
+    return {
+        "alpha_annualized": alpha_ann,
+        "beta":             beta,
+        "r_squared":        model.rsquared,
+        "alpha_tstat":      model.tvalues["const"],
+        "alpha_pvalue":     model.pvalues["const"],
+    }
+
+
 def benchmark_long_only_equal_weight(prices: pd.DataFrame):
     """
        Long-only equal-weight benchmark over the same universe and date range
@@ -168,6 +219,8 @@ def run_demo():
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
+
+    factor_decomposition(port_rets, bmark_rets, rf)
 
     # print first rebalance positions
     print("\nSample positions (first rebalance):")
