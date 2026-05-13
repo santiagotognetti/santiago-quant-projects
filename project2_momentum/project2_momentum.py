@@ -236,7 +236,7 @@ def run_demo():
         print(f" {k:<20} {stats_port[k]:>12.4f} {stats_bmark[k]:>14.4f}")
 
     cum_port = (1 + port_rets).cumprod() - 1
-    cum_bmark = (1 + bmark_rets).cumprod()
+    cum_bmark = (1 + bmark_rets).cumprod() - 1
 
     plt.figure(figsize=(11, 4))
     plt.plot(cum_port.index, cum_port.values, label="L/S Momentum", linewidth=2)
