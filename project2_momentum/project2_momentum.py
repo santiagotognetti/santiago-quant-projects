@@ -13,6 +13,12 @@ import statsmodels.api as sm
 
 
 def simulate_cross_section(n_stocks=500, n_days=5200):
+    """
+    Simulate cross sectional price data stochastically.
+    :param n_stocks: number of tickers to simulate
+    :param n_days: number of trading days to simulate
+    :return: prices data for specified number of stocks in specified number of days
+    """
     rng = np.random.default_rng(42)
     mu = 0.0004 / 252
     sigma_market = 0.15 / np.sqrt(252)
@@ -27,6 +33,19 @@ def simulate_cross_section(n_stocks=500, n_days=5200):
     return df_prices
 
 def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, max_weight):
+    """
+    Core function for the strategy. Detects top and bottom performers in the lookback period,
+    defines a weight scheme based on performance,
+    rebalances portfolio based on momemtum position, computes turnover, returns results.
+
+    :param prices: stock prices
+    :param lookback: lookback period in days
+    :param topk: number of tickers at the top and bottom to be included in the portfolio (long and short positions)
+    :param rebalance_period: rebalancing frequency
+    :param tc_per_unit: transaction costs in bpms
+    :param max_weight: maximum weight allowed to any specific ticker in the portfolio
+    :return: returns, positions based on momentum and turnover stats
+    """
     rets = prices.pct_change().fillna(0)
     skip_days = 21
     momentum = prices.pct_change(periods=lookback).shift(skip_days)
@@ -101,6 +120,17 @@ def get_risk_free_rate(start: str, end: str) -> pd.Series:
     return rf / 252
 
 def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None, turnover = 0, rebalance_period = 21):
+    """
+    Creates stats study performance purposes.
+
+    :param returns: returns in the portfolio
+    :param freq: frequency, in this case trading days
+    :param rf: risk-free rate
+    :param turnover
+    :param rebalance_period
+    :return: annualized return, annualized volatility, sharpe ratio, cumulative returns, max drawdown in the period
+     and annual turnover
+    """
     if freq == 'day':
         ann_factor = 252
     else:
@@ -173,12 +203,12 @@ def factor_decomposition(port_rets: pd.Series, bmark_rets: pd.Series,
 
 def benchmark_long_only_equal_weight(prices: pd.DataFrame):
     """
-       Long-only equal-weight benchmark over the same universe and date range
-       as the momentum strategy. Rebalances monthly to maintain equal weights.
-       No transaction costs applied (benchmark assumed frictionless).
+    Long-only equal-weight benchmark over the same universe and date range
+    as the momentum strategy. Rebalances monthly to maintain equal weights.
+    No transaction costs applied (benchmark assumed frictionless).
 
-       Returns daily portfolio returns as a pd.Series.
-       """
+    Returns daily portfolio returns as a pd.Series.
+    """
     rets = prices.pct_change().fillna(0)
     n = prices.shape[1]
     weight = 1.0 / n
