@@ -42,7 +42,7 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
     :param lookback: lookback period in days
     :param topk: number of tickers at the top and bottom to be included in the portfolio (long and short positions)
     :param rebalance_period: rebalancing frequency
-    :param tc_per_unit: transaction costs in bpms
+    :param tc_per_unit: transaction cost per unit of turnover (e.g. 0.001 = 10 bps round-trip)
     :param max_weight: maximum weight allowed to any specific ticker in the portfolio
     :return: returns, positions based on momentum and turnover stats
     """
@@ -80,7 +80,7 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
         short_weights = (short_weights.clip(upper=max_weight))
         short_weights = short_weights / short_weights.sum()
 
-        pos = pd.Series(0.0, index=prices.columns)  
+        pos = pd.Series(0.0, index=prices.columns)
 
         pos[top] = long_weights
         pos[bottom] = -short_weights
