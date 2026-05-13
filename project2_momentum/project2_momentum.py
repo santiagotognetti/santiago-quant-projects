@@ -231,7 +231,7 @@ def run_demo():
                             rf=rf, turnover=turnover, rebalance_period=21)
     stats_bmark = perf_stats(bmark_rets, freq='day', rf=rf, turnover=[0], rebalance_period=21)
     print(f"{'Metric':<22} {'Momentum':>12} {'EW Benchmark':>14}")
-    print(""*50)
+    print("-" * 50)
     for k in stats_port:
         print(f" {k:<20} {stats_port[k]:>12.4f} {stats_bmark[k]:>14.4f}")
 
