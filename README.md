@@ -1,3 +1,5 @@
+#### Python 3.11+
+
 # Santiago Tognetti – Quant Research & Trading Projects
 
 Welcome to my repository of quantitative finance research projects.  
