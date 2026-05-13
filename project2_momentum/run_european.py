@@ -4,11 +4,11 @@ import datetime as dt
 from pathlib import Path
 from core import (momentum_long_short, perf_stats, factor_decomposition,
                   benchmark_long_only_equal_weight, get_risk_free_rate)
-from data import get_tickers, load_prices, benchmark_long_only_equal_weight
+from data import get_tickers, load_prices
 
 def run_european():
     DATA_PATH = Path(__file__).parent / "Data" / "EUMD_holdings.csv"
-    start = "2000-01-01"
+    start = "2010-01-01"
     end = dt.date.today()
     tickers = get_tickers(DATA_PATH)
     prices = load_prices(tickers, start, end)

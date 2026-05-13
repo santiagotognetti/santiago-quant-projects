@@ -80,7 +80,6 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
     portfolio_rets = pd.concat(portfolio_rets)
     return portfolio_rets, positions_store, turnover
 
-
 def get_risk_free_rate(start: str, end: str) -> pd.Series:
     """
     Fetch daily 3-month T-bill rate from FRED (annualized, in decimal).
@@ -90,7 +89,6 @@ def get_risk_free_rate(start: str, end: str) -> pd.Series:
     rf = rf / 100
     rf = rf.resample('B').ffill()
     return rf / 252
-
 
 def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = None, turnover = 0, rebalance_period = 21):
     """
@@ -129,7 +127,6 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
         "max_drawdown": maxdd,
         "annual turnover": ann_turnover,
     }
-
 
 def factor_decomposition(port_rets: pd.Series, bmark_rets: pd.Series,
                          rf: pd.Series) -> dict:

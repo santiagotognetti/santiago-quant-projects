@@ -43,7 +43,6 @@ def lookback_sensitivity(
 
     return pd.DataFrame(results).set_index("lookback_days")
 
-
 def plot_lookback_sensitivity(sens_df: pd.DataFrame, save_path: str = None):
     """
 
@@ -72,29 +71,30 @@ def plot_lookback_sensitivity(sens_df: pd.DataFrame, save_path: str = None):
 
         if col == "sharpe":
             best_lb = sens_df["sharpe"].idxmax()
-            best_val = sens_df["sharpe"].max()
             ax.axvline(x=best_lb, color='green', linestyle= 'dashed', alpha=0.6, label= 'Best Sharpe Ratio')
     if save_path:
         plt.savefig(save_path)
     else:
         plt.show()
 
-def run_sensitivy():
+def run_sensitivity():
     DATA_PATH = Path(__file__).parent / "Data" / "EUMD_holdings.csv"
-    start = "2000-01-01"
+    start = "2010-01-01"
     end = dt.date.today()
+    TOPK = 10
     tickers = get_tickers(DATA_PATH)
     prices = load_prices(tickers, start, end)
-    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=25, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
+    rf = get_risk_free_rate(start=start, end=end)
+    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=TOPK, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
 
     stats = perf_stats(port_rets, freq='day', rf=rf, turnover=turnover, rebalance_period=21)
-    cum = (1 + port_rets).cumprod() - 1
+
     print("Project 2 Performance:")
     for k,v in stats.items():
         print(f"  {k}: {v:.6f}")
 
     print("\nRunning lookback sensitivity analysis...")
-    sens_df = lookback_sensitivity(prices, rf=rf)
+    sens_df = lookback_sensitivity(prices, rf=rf, topk=TOPK, rebalance_period=21)
     print("\nSensitivity results:")
     print(sens_df[["lookback_months", "sharpe", "annualized_return",
                    "max_drawdown", "annual turnover"]].to_string())
@@ -108,12 +108,12 @@ def run_sensitivy():
 
     # --- Main backtest with optimal lookback ---
     port_rets, positions, turnover = momentum_long_short(
-        prices, lookback=best_lookback, topk=25,
+        prices, lookback=best_lookback, topk=TOPK,
         rebalance_period=21, tc_per_unit=0.001, max_weight=0.20
     )
     stats = perf_stats(port_rets, freq='day', rf=rf,
                        turnover=turnover, rebalance_period=21)
-
+    cum = (1 + port_rets).cumprod() - 1
     plt.figure(figsize=(10,4))
     plt.plot(cum.index, cum.values)
     plt.title("Project2: Cross-Sectional Momentum Cumulative Return")
@@ -128,4 +128,4 @@ def run_sensitivy():
     print(positions[0].loc[positions[0] != 0].sort_values(ascending=True).to_string())
 
 if __name__ == "__main__":
-    run_sensitivy()
+    run_sensitivity()
