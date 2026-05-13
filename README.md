@@ -144,9 +144,9 @@ applied without modification to the out-of-sample test period (2018–2020).
 
 
 ## Contact details:
-# LinkedIn: https://www.linkedin.com/in/santiago-tognetti-57022a122/
-# Email: tognettisantiago@gmail.com
-# GitHub: https://github.com/gomerfield/
+### LinkedIn: https://www.linkedin.com/in/santiago-tognetti-57022a122/
+### Email: tognettisantiago@gmail.com
+### GitHub: https://github.com/gomerfield/
 
 
 **Future Work**
