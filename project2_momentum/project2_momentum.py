@@ -220,7 +220,7 @@ def run_demo():
     prices = simulate_cross_section(n_stocks=500, n_days=5200)
     rf = get_risk_free_rate(start=start, end=end)
 
-    # Momentun strategy
+    # Momentum strategy
     port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=10, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
 
     # Long only, equal weight benchmark
