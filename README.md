@@ -41,7 +41,7 @@ explicitly.
 Includes:
 
 - Synthetic-data demo (500 simulated stocks, no external data required)
-- Momentum factor computation with configurable lookback (default: 252 days)
+- Momentum factor computation with configurable lookback (default: 189 days, selected via in-sample sensitivity analysis)
 - Cross-sectional ranking and score-proportional weight construction
 - Long top-k / short bottom-k with max-weight cap (default: 20%)
 - Monthly rebalancing with turnover tracking and transaction cost deduction
@@ -54,7 +54,7 @@ Includes:
 **Core Idea:**  
 Stocks that have outperformed over the past 6–12 months tend to continue
 outperforming over the next month (Jegadeesh & Titman, 1993). This project
-implements a market-neutral version of that signal on European equities and
+implements a market-neutral (dollar-neutral; beta not explicitly hedged) version of that signal on European equities and
 evaluates whether the premium survives realistic trading frictions.
 
 **How to run:**
@@ -80,9 +80,6 @@ python project2_momentum/run_sensitivity.py
 | `run_european.py` | Full backtest on European equity universe (2010–present) |
 | `run_sensitivity.py` | Lookback grid search with Sharpe-optimal selection |
 
-> **Note on results:** Figures and performance summaries are generated at runtime
-> and printed to stdout / displayed as matplotlib charts. Backtest results
-> are reported in-sample; a formal train/test split is on the roadmap.
 
 ### Out-of-Sample Results (2018–2020)
 
@@ -112,7 +109,7 @@ analysis section.
 ### Lookback Sensitivity Analysis (In-Sample: 2010–2018)
 
 The strategy was evaluated across eight lookback horizons to identify the
-optimal momentum formation period before the out-of-sample test window.
+optimal momentum formation period before the out-of-sample test window. In-sample (2010–2018), the strategy achieved a Sharpe of 1.08 at a 189-day lookback with 30% annualised return net of costs.
 
 | Lookback (days) | Lookback (months) | Sharpe | Ann. Return | Max Drawdown | Ann. Turnover |
 |---|---|---|---|---|---|
@@ -146,10 +143,10 @@ applied without modification to the out-of-sample test period (2018–2020).
 
 
 
-Contact details:
-LinkedIn: https://www.linkedin.com/in/santiago-tognetti-57022a122/
-Email: tognettisantiago@gmail.com
-GitHub: https://github.com/gomerfield/
+## Contact details:
+# LinkedIn: https://www.linkedin.com/in/santiago-tognetti-57022a122/
+# Email: tognettisantiago@gmail.com
+# GitHub: https://github.com/gomerfield/
 
 
 **Future Work**
