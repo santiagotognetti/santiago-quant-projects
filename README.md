@@ -89,13 +89,13 @@ python project2_momentum/run_sensitivity.py
 
 | Metric | L/S Momentum | EW Benchmark |
 |---|---|---|
-| Annualised Return | 0.49% | 8.68% |
-| Annualised Volatility | 19.47% | 11.78% |
+| Annualised Return | 0.51% | 8.74% |
+| Annualised Volatility | 19.47% | 11.76% |
 | Sharpe Ratio | 0.03 | 0.74 |
-| Sortino | 0.04 | 1.02 |
-| Calmar | 0.02 | 0.53 |
-| Cumulative Return | 1.22% | 21.83% |
-| Max Drawdown | 28.52% | 16.37% |
+| Sortino | 0.04 | 1.03 |
+| Calmar | 0.02 | 0.54 |
+| Cumulative Return | 1.26% | 21.98% |
+| Max Drawdown | 28.50% | 16.32% |
 | Annual Turnover | 4.87× | — |
 
 The out-of-sample period (2018–2020) coincides with two well-documented momentum
