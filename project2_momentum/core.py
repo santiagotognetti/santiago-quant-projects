@@ -122,8 +122,10 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
     downside_vol = downside.std() * np.sqrt(ann_factor) if len(downside) > 1 else np.nan
     sortino = mean / downside_vol if downside_vol and downside_vol > 0 else np.nan
 
-    cum = (1 + returns).cumprod() - 1
-    maxdd = (cum.cummax() - cum).max()
+    cum_gross = (1 + returns).cumprod()
+    maxdd = (cum_gross.cummax() - cum_gross).div(cum_gross.cummax()).max()
+
+    cum = cum_gross - 1
     ann_turnover = np.mean(turnover) * (252 / rebalance_period)
     calmar = mean / maxdd if maxdd > 0 else np.nan
 

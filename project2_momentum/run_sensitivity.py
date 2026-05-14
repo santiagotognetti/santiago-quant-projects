@@ -53,27 +53,32 @@ def plot_lookback_sensitivity(sens_df: pd.DataFrame, save_path: str = None):
     :return: plot
     """
     metrics = {
-        "sharpe":"Sharpe Ratio",
-        "annualized_return":"Annualized Return",
-        "max_drawdown":"Max Drawdown",
-        "annualized_vol":"Annualized Volatility",
+        "sharpe": "Sharpe Ratio",
+        "sortino": "Sortino Ratio",
+        "calmar": "Calmar Ratio",
+        "annualized_return": "Annualized Return",
+        "max_drawdown": "Max Drawdown",
+        "annualized_vol": "Annualized Volatility",
     }
 
-    fi, axes = plt.subplots(2, 2, figsize=(12,8))
+    fig, axes = plt.subplots(2, 3, figsize=(16, 8))  # ← 2×3 grid now
     axes = axes.flatten()
 
     for ax, (col, label) in zip(axes, metrics.items()):
         ax.plot(sens_df.index, sens_df[col], marker='o', linewidth=2)
         ax.axvline(x=252, color='red', linestyle='dashed', alpha=0.6, label='Default (252 days)')
         ax.set_title(label)
-        ax.set_xlabel("Lookback Period")
+        ax.set_xlabel("Lookback Period (days)")
         ax.set_ylabel(label)
         ax.legend()
         ax.grid(True, alpha=0.3)
 
         if col == "sharpe":
             best_lb = sens_df["sharpe"].idxmax()
-            ax.axvline(x=best_lb, color='green', linestyle= 'dashed', alpha=0.6, label= 'Best Sharpe Ratio')
+            ax.axvline(x=best_lb, color='green', linestyle='dashed',
+                       alpha=0.6, label='Best Sharpe')
+
+    plt.tight_layout()
     if save_path:
         plt.savefig(save_path)
     else:
@@ -98,8 +103,8 @@ def run_sensitivity():
     print("\nRunning lookback sensitivity analysis...")
     sens_df = lookback_sensitivity(prices, rf=rf, topk=TOPK, rebalance_period=21)
     print("\nSensitivity results:")
-    print(sens_df[["lookback_months", "sharpe", "annualized_return",
-                   "max_drawdown", "annual turnover"]].to_string())
+    print(sens_df[["lookback_months", "sharpe", "sortino", "calmar",
+                   "annualized_return", "max_drawdown", "annual turnover"]].to_string())
 
     best_lookback = int(sens_df["sharpe"].idxmax())
     print(f"\nOptimal lookback by Sharpe: {best_lookback} days "

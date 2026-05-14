@@ -16,7 +16,7 @@ def run_european():
     rf = get_risk_free_rate(start=start_download, end=end)
 
     # Momentum strategy
-    port_rets, positions, turnover = momentum_long_short(prices, lookback=189, topk=10, rebalance_period=21, tc_per_unit=0.001, max_weight=1)
+    port_rets, positions, turnover = momentum_long_short(prices, lookback=189, topk=10, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
 
     # Long only, equal weight benchmark
     bmark_rets = benchmark_long_only_equal_weight(prices)
