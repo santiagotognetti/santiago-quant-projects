@@ -22,7 +22,7 @@ Includes:
 - Intraday mean-reversion model
 - Rolling z-score signal generation
 - Backtesting engine with cost & turnover handling
-- Performance metrics (Sharpe, drawdown, annualized returns)
+- Performance metrics (Sharpe, drawdown, Sortino, Calmar, annualized returns)
 - Plots and cumulative results
 
 **Core Idea:**  
@@ -42,7 +42,7 @@ explicitly.
 
 Includes:
 
-- Synthetic-data demo (500 simulated stocks, no external data required)
+- Synthetic-data demo (500 simulated stocks, no external data required). Results from this module arise from noise, and was only placed for testing logic
 - Momentum factor computation with configurable lookback (default: 189 days, selected via in-sample sensitivity analysis)
 - Cross-sectional ranking and score-proportional weight construction
 - Long top-k / short bottom-k with max-weight cap (default: 20%)
@@ -55,9 +55,8 @@ Includes:
 
 **Core Idea:**  
 Stocks that have outperformed over the past 6–12 months tend to continue
-outperforming over the next month (Jegadeesh & Titman, 1993). This project
-implements a market-neutral (dollar-neutral; beta not explicitly hedged) version of that signal on European equities and
-evaluates whether the premium survives realistic trading frictions.
+outperforming over the next month (Jegadeesh & Titman, 1993). This project implements a dollar-neutral (but not beta-hedged) 
+version of that signal on European equities and evaluates whether the premium survives realistic trading frictions.
 Note: universe is subject to survivorship bias — only current STOXX Europe 600 constituents are included.
 
 
@@ -110,9 +109,6 @@ The CAPM decomposition yields an annualised alpha of 4.6% (t = 0.33, p = 0.739),
 which is not statistically significant — returns over this period are not
 explained by market exposure either, given a market beta of –0.19. The low
 R-squared of 0.013 confirms the strategy is largely market-neutral, as intended.
-These results are consistent with the broader academic evidence on momentum crashes
-(Daniel & Moskowitz, 2016). In-sample performance (2010–2018) is reported
-separately in the sensitivity analysis section.
 
 These results are consistent with the broader academic evidence on momentum crashes
 (Daniel & Moskowitz, 2016). The high annual turnover of 9.39× also indicates that
@@ -124,42 +120,51 @@ analysis section.
 
 The strategy was evaluated across eight lookback horizons to identify the
 optimal momentum formation period before the out-of-sample test window.
-In-sample (2010–2018), the strategy achieved a Sharpe of 1.06 at a 189-day
-lookback with 29.4% annualised return net of costs.
+All lookbacks are evaluated over a common window starting from the first
+date at which the longest formation period (378 days + 21-day skip) has a
+valid signal, ensuring metrics are directly comparable across horizons.
+In-sample, the strategy achieved a Sharpe of 0.89 at a 189-day lookback
+with 24.1% annualised return net of costs.
 
 | Lookback (days) | Months | Sharpe | Sortino | Calmar | Ann. Return | Max Drawdown | Ann. Turnover |
 |---|---|---|---|---|---|---|---|
-| 21 | 1 | –0.16 | –0.22 | –0.06 | –3.76% | 63.82% | 21.90× |
-| 42 | 2 | 0.52 | 0.74 | 0.33 | 13.06% | 39.24% | 16.58× |
-| 62 | 3 | 0.77 | 1.06 | 0.62 | 19.60% | 31.66% | 13.91× |
-| 126 | 6 | 1.02 | 1.46 | 0.93 | 28.77% | 31.05% | 9.83× |
-| **189** | **9** | **1.06** | **1.53** | **0.88** | **29.44%** | **33.46%** | **7.72×** |
-| 252 | 12 | 1.00 | 1.42 | 0.78 | 26.74% | 34.30% | 6.25× |
-| 315 | 15 | 0.70 | 1.02 | 0.62 | 17.97% | 29.04% | 5.66× |
+| 21 | 1 | –0.20 | –0.29 | –0.07 | –4.65% | 63.82% | 21.90× |
+| 42 | 2 | 0.40 | 0.60 | 0.25 | 9.92% | 39.24% | 16.58× |
+| 62 | 3 | 0.70 | 1.03 | 0.55 | 17.37% | 31.66% | 13.91× |
+| 126 | 6 | 0.81 | 1.21 | 0.72 | 22.21% | 31.05% | 9.83× |
+| **189** | **9** | **0.89** | **1.31** | **0.72** | **24.11%** | **33.46%** | **7.72×** |
+| 252 | 12 | 0.80 | 1.15 | 0.62 | 21.22% | 34.30% | 6.25× |
+| 315 | 15 | 0.51 | 0.75 | 0.45 | 13.15% | 29.04% | 5.66× |
 | 378 | 18 | 0.44 | 0.65 | 0.35 | 11.29% | 32.28% | 4.97× |
 
-The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.06
-and Sortino at 1.53, consistent with the Jegadeesh & Titman (1993) finding that
-intermediate-horizon momentum (6–12 months) dominates short and long-term
-horizons. The 1-month lookback produces negative returns across all three
-risk-adjusted metrics, capturing short-term reversal rather than momentum — a
-well-known empirical regularity. Turnover declines monotonically with lookback
-length, as longer formation windows generate more stable rankings and require
-fewer position changes at each rebalance.
+The **9-month (189-day) lookback** maximises Sharpe at 0.89 and Sortino at
+1.31, consistent with Jegadeesh & Titman (1993). The 1-month lookback
+produces negative returns across all three risk-adjusted metrics, capturing
+short-term reversal rather than momentum — a well-known empirical
+regularity. Turnover declines monotonically with lookback length, as longer
+formation windows generate more stable rankings.
 
-Note that the Calmar ratio peaks at 6 months (0.93) rather than 9 months (0.88),
-reflecting a slightly lower max drawdown at that horizon. The 9-month lookback
-was selected on Sharpe as the primary criterion; a practitioner weighting
-drawdown control more heavily might prefer 6 months.
+The decline from an in-sample Sharpe of 0.89 to 0.12 out-of-sample is consistent 
+with both overfitting to a benign 2010–2018 training environment and the known
+fragility of momentum strategies during sharp reversals.
+
+Note that the Calmar ratio peaks jointly at 6 months (0.72) and 9 months
+(0.72), reflecting near-identical drawdown control at those two horizons.
+The 9-month lookback was selected on Sharpe as the primary criterion.
 
 The optimal lookback (189 days) was selected purely on in-sample Sharpe and
 applied without modification to the out-of-sample test period (2018–2020).
 
 
 
-**Future Work**
 
-Beta-weighting positions
+**Future Work**
+- Beta-weighted position sizing to reduce the observed market beta of –0.19
+- Rank-based weights instead of score-proportional weights to eliminate
+  the clipping discontinuity at zero momentum
+- Extension of the evaluation window beyond 2020 to cover the post-COVID
+  momentum recovery period
+
 
 
 
