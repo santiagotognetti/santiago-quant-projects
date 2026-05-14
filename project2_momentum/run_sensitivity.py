@@ -92,11 +92,11 @@ def run_sensitivity():
     tickers = get_tickers(DATA_PATH)
     prices = load_prices(tickers, start, end)
     rf = get_risk_free_rate(start=start, end=end)
-    port_rets, positions, turnover = momentum_long_short(prices, lookback=252, topk=TOPK, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
+    port_rets, positions, turnover = momentum_long_short(prices, lookback=189, topk=TOPK, rebalance_period=21, tc_per_unit=0.001, max_weight=0.2)
 
     stats = perf_stats(port_rets, freq='day', rf=rf, turnover=turnover, rebalance_period=21)
 
-    print("Project 2 Performance:")
+    print("Project 2 Performance (default lookback 189 days):")
     for k,v in stats.items():
         print(f"  {k}: {v:.6f}")
 
