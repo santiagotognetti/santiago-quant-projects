@@ -18,7 +18,7 @@ TEST_END    = "2024-12-31"
 
 def run_sensitivity(df_train: pd.DataFrame) -> pd.DataFrame:
     """
-    Grid search over z_window × z_thresh on the training period.
+    Grid search over z_window × z_thresh × stop_loss on the training period.
     Selects optimal parameters by in-sample Sharpe ratio.
 
     :param df_train: prepared bar DataFrame for the training period
@@ -26,18 +26,21 @@ def run_sensitivity(df_train: pd.DataFrame) -> pd.DataFrame:
     """
     z_windows    = [15, 30, 60, 120, 240]
     z_thresholds = [0.5, 1.0, 1.5, 2.0]
+    stop_losses  = [0.001, 0.0015, 0.002, 0.003]
     results = []
 
     for zw in z_windows:
         for zt in z_thresholds:
             df_sig = compute_signal(df_train, z_window=zw, z_thresh=zt)
-            df_bt  = backtest(df_sig)
-            stats  = perf_stats(df_bt["strategy_ret"], freq="min")
-            stats["z_window"] = zw
-            stats["z_thresh"] = zt
-            results.append(stats)
-            print(f"  z_window={zw:>4}, z_thresh={zt:.1f}  →  "
-                  f"Sharpe={stats['sharpe']:.3f}  hit_rate={stats['hit_rate']:.2%}")
+            for sl in stop_losses:
+                df_bt = backtest(df_sig, stop_loss=sl)
+                stats = perf_stats(df_bt["strategy_ret"], freq="min")
+                stats["z_window"]  = zw
+                stats["z_thresh"]  = zt
+                stats["stop_loss"] = sl
+                results.append(stats)
+                print(f"  z_window={zw:>4}, z_thresh={zt:.1f}, stop_loss={sl:.4f}"
+                      f"  →  Sharpe={stats['sharpe']:.3f}  hit_rate={stats['hit_rate']:.2%}")
 
     return pd.DataFrame(results).sort_values("sharpe", ascending=False)
 
@@ -45,7 +48,7 @@ def run_live():
     api_key = os.environ.get("POLYGON_API_KEY", "Sy4ZQHDR_6kt6HnD8VOCJpj0qC_8PnZp")
     if not api_key:
         raise EnvironmentError(
-            "Set your Polygon API key:\n  export POLYGON_API_KEY=your polygon key here"
+            "Set your Polygon API key:\n export POLYGON_API_KEY=your polygon key here"
         )
 
     # ── Download & prepare ──────────────────────────────────────────────
@@ -59,29 +62,30 @@ def run_live():
     )
     raw.index = raw.index.tz_localize(None)
     df = prepare_bars(raw)
-    print(f"df date range: {df.index.min()} → {df.index.max()}")  #debugging
-    print(df.index[:3])  #debugging
+    print(f"df date range: {df.index.min()} → {df.index.max()}")
+    print(df.index[:3])
     df_train = df[TRAIN_START:TRAIN_END]
-    df_test = df[TEST_START:TEST_END]
-    print(f"Index dtype: {df.index.dtype}")  # should say datetime64[ns], not datetime64[ns, America/New_York]
+    df_test  = df[TEST_START:TEST_END]
+    print(f"Index dtype: {df.index.dtype}")
     print(f"Train: {len(df_train):,} bars  |  Test: {len(df_test):,} bars")
 
     # ── In-sample parameter search ───────────────────────────────────────
-    print("\nRunning in-sample sensitivity (z_window × z_thresh grid)...")
+    print("\nRunning in-sample sensitivity (z_window × z_thresh × stop_loss grid)...")
     sens = run_sensitivity(df_train)
 
     print("\nTop 5 in-sample parameter combinations:")
-    print(sens[["z_window", "z_thresh", "sharpe", "sortino",
+    print(sens[["z_window", "z_thresh", "stop_loss", "sharpe", "sortino",
                 "calmar", "hit_rate", "profit_factor"]].head(5).to_string(index=False))
 
     best_zw = int(sens.iloc[0]["z_window"])
     best_zt = float(sens.iloc[0]["z_thresh"])
-    print(f"\nOptimal: z_window={best_zw}, z_thresh={best_zt}")
+    best_sl = float(sens.iloc[0]["stop_loss"])
+    print(f"\nOptimal: z_window={best_zw}, z_thresh={best_zt}, stop_loss={best_sl}")
 
     # ── Out-of-sample backtest ───────────────────────────────────────────
     print(f"\nOut-of-sample backtest ({TEST_START} → {TEST_END})...")
     df_sig = compute_signal(df_test, z_window=best_zw, z_thresh=best_zt)
-    df_bt  = backtest(df_sig)
+    df_bt  = backtest(df_sig, stop_loss=best_sl)
     stats  = perf_stats(df_bt["strategy_ret"], freq="min")
 
     print("\nOut-of-sample performance:")
@@ -95,8 +99,8 @@ def run_live():
         print(f"  Avg holding period : {trade_log['n_bars'].mean():.1f} bars")
         print(f"  Avg PnL per trade  : {trade_log['pnl'].mean():.6f}")
         print(f"  Win rate           : {(trade_log['pnl'] > 0).mean():.2%}")
-        wins  = trade_log[trade_log["pnl"] > 0]["pnl"].sum()
-        loss  = trade_log[trade_log["pnl"] < 0]["pnl"].sum()
+        wins = trade_log[trade_log["pnl"] > 0]["pnl"].sum()
+        loss = trade_log[trade_log["pnl"] < 0]["pnl"].sum()
         print(f"  Profit factor      : {wins / abs(loss):.3f}")
 
     # ── Time-of-day P&L breakdown ────────────────────────────────────────
@@ -124,7 +128,6 @@ def run_live():
 
     plt.tight_layout()
     plt.show()
-
 
 if __name__ == "__main__":
     run_live()

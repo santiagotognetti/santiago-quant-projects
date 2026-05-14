@@ -96,41 +96,44 @@ def prepare_bars(
 ) -> pd.DataFrame:
     """
     Clean raw Polygon bars for backtesting:
-    - Restrict to regular session (09:30–15:59 ET); excludes the 16:00 close bar to avoid corner cases
+    - Restrict to regular session (09:30–15:59 ET)
     - Drop zero-volume bars (halts, auction prints)
     - Resample to 1-min grid; forward-fill max 2 consecutive missing bars
-    - Compute log returns
-    - Compute bar-level order-flow imbalance: (close - open) / (high - low)
-    - Compute spread proxy: (high - low) / close
+    - Compute log returns, OHLC imbalance proxy, spread proxy
+    - Compute intraday cumulative VWAP deviation (primary signal feature)
 
     :param df: raw DataFrame from fetch_polygon_minute_bars
     :param session_start: inclusive session open
     :param session_end: inclusive session close
     :return: cleaned DataFrame with [open, high, low, close, volume, vwap,
-             ret, imbalance, spread]
+             ret, imbalance, spread, vwap_dev]
     """
-    # Regular session only
     df = df.between_time(session_start, session_end).copy()
-
-    # Drop zero-volume bars (halts, auction prints)
     df = df[df["volume"] > 0].copy()
 
-    # Fill gaps up to 2 consecutive missing bars; drop anything longer
     df = df.resample("min").last()
     df = df.ffill(limit=2)
     df = df.dropna(subset=["close"])
 
-    # Log returns
+    # Strip timezone after resample to keep index tz-naive
+    if df.index.tz is not None:
+        df.index = df.index.tz_convert("America/New_York").tz_localize(None)
+
     df["ret"] = np.log(df["close"] / df["close"].shift(1)).fillna(0)
 
-    # Bar-level order-flow imbalance proxy: (close - open) / (high - low)
     bar_range       = (df["high"] - df["low"]).replace(0, np.nan)
     df["imbalance"] = ((df["close"] - df["open"]) / bar_range).fillna(0)
+    df["spread"]    = (df["high"] - df["low"]) / df["close"]
 
-    # Spread proxy: (high - low) / close
-    df["spread"] = (df["high"] - df["low"]) / df["close"]
+    # Intraday cumulative VWAP deviation — computed per day via explicit loop
+    vwap_dev = []
+    for date, group in df.groupby(df.index.date):
+        cum_vol    = group["volume"].cumsum()
+        cum_tp_vol = (group["close"] * group["volume"]).cumsum()
+        vwap_day   = cum_tp_vol / cum_vol
+        vwap_dev.append((group["close"] - vwap_day) / vwap_day)
 
+    df["vwap_dev"] = pd.concat(vwap_dev)
 
     return df[["open", "high", "low", "close", "volume", "vwap",
-               "ret", "imbalance", "spread"]]
-
+               "ret", "imbalance", "spread", "vwap_dev"]]

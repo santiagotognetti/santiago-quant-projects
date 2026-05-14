@@ -48,37 +48,59 @@ def simulate_intraday(n_days: int = 252, minutes_per_day: int = 390, seed: int =
     return pd.concat(all_rows)
 
 def compute_signal(df: pd.DataFrame, z_window: int = 60, z_thresh: float = 1.0) -> pd.DataFrame:
+    """
+    Compute rolling z-score of intraday VWAP deviation per trading day.
+    Signal: mean-reversion — fade extreme deviations from daily VWAP.
+    First 30 minutes of session suppressed (directional open flow contaminates signal).
+
+    :param df: output of prepare_bars(), must contain [vwap_dev]
+    :param z_window: rolling window for z-score normalisation (bars)
+    :param z_thresh: entry threshold in z-score units
+    """
     df = df.copy()
     df["imb_z"] = 0.0
+    df["signal"] = 0       # ← initialise before any .loc writes
 
     for date, group in df.groupby(df.index.date):
         idx = group.index
-        rm = group["imbalance"].rolling(z_window, min_periods=1).mean()
-        rs = group["imbalance"].rolling(z_window, min_periods=1).std().replace(0, 1e-8)
-        df.loc[idx, "imb_z"] = ((group["imbalance"] - rm) / rs).values
+        rm  = group["vwap_dev"].rolling(z_window, min_periods=1).mean()
+        rs  = group["vwap_dev"].rolling(z_window, min_periods=1).std().replace(0, 1e-8)
+        df.loc[idx, "imb_z"] = ((group["vwap_dev"] - rm) / rs).values
 
-    df["signal"] = 0
-    df.loc[df["imb_z"] >  z_thresh, "signal"] = -1
-    df.loc[df["imb_z"] < -z_thresh, "signal"] =  1
+    # Suppress first 30 minutes — open auction flow is directional, not mean-reverting
+    open_mask = (df.index.hour == 9) & (df.index.minute < 60)
+    df.loc[df["imb_z"] >  z_thresh, "signal"] = -1   # above VWAP → short
+    df.loc[df["imb_z"] < -z_thresh, "signal"] =  1   # below VWAP → long
+    df.loc[open_mask, "signal"] = 0                   # zero out open last
+
     return df
 
-def backtest(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Execute signal as a backtest. Position enters at next bar (shift(1)) to prevent lookahead bias
-    Forced flat at the last bar of each trading day
-    Transaction cost are half-spread per side of the trade, charged on every position change
-    """
+def backtest(df: pd.DataFrame, stop_loss: float = 0.0015) -> pd.DataFrame:
     df = df.copy()
 
-    raw_pos = df["signal"].shift(1).fillna(0)
+    confirmed = (df["signal"] == df["signal"].shift(1)) & (df["signal"] != 0)
+    df["signal"] = df["signal"].where(confirmed, 0)
 
-    # Force flat at end of each trading day
+    raw_pos = df["signal"].shift(1).fillna(0)
     eod_idx = df.groupby(df.index.date).apply(lambda g: g.index[-1]).values
     raw_pos.loc[eod_idx] = 0.0
     df["pos"] = raw_pos
 
-    df["strategy_ret_raw"] = df["pos"] * df["ret"]
+    # Apply stop-loss: track cumulative PnL per trade; exit if loss exceeds stop
+    pos      = df["pos"].values.copy()
+    ret      = df["ret"].values
+    trade_pnl = 0.0
+    for i in range(1, len(pos)):
+        if pos[i] != 0:
+            trade_pnl += pos[i] * ret[i]
+            if trade_pnl < -stop_loss:   # stop hit → flat until new signal
+                pos[i] = 0.0
+                trade_pnl = 0.0
+        else:
+            trade_pnl = 0.0
+    df["pos"] = pos
 
+    df["strategy_ret_raw"] = df["pos"] * df["ret"]
     pos_change = df["pos"].diff().abs().fillna(df["pos"].abs())
     df["trade"] = (pos_change > 0).astype(int)
     df["tc"]    = df["trade"] * (df["spread"] / 2)
