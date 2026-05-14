@@ -17,9 +17,11 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
     :param max_weight: maximum weight allowed to any specific ticker in the portfolio
     :return: returns, positions based on momentum and turnover stats
     """
-    rets = prices.pct_change().fillna(0)
+    prices_filled = prices.ffill()
+    rets = prices_filled.pct_change()
+    rets = rets.fillna(0)
     skip_days = 21
-    momentum = prices.pct_change(periods=lookback).shift(skip_days)
+    momentum = prices_filled.pct_change(periods=lookback).shift(skip_days)
 
     rebalance_days = list(range(0, len(prices), rebalance_period))
     portfolio_rets = []
@@ -60,8 +62,7 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
 
         # turnover proportional to changes in absolute position
 
-        gross_exposure = pos.abs().sum() + prev_pos.abs().sum()
-        tr = (pos.subtract(prev_pos).abs()).sum() / gross_exposure if gross_exposure > 0 else 0.0
+        tr = pos.subtract(prev_pos).abs().sum() / 2
         turnover.append(tr)
 
         # apply daily returns for holding period
@@ -70,8 +71,9 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
 
         # simple transaction cost hit on rebalance (applied once per rebalance)
         tc = tr * tc_per_unit
-        # subtract amortized cost over holding period simply (quick demo)
-        daily_port_returns = daily_port_returns - tc / max(1, (end - start))
+
+        if len(daily_port_returns) > 0:
+            daily_port_returns.iloc[0] -= tc
 
         portfolio_rets.append(daily_port_returns)
         positions_store.append(pos)
@@ -82,10 +84,10 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
 
 def get_risk_free_rate(start: str, end: str) -> pd.Series:
     """
-    Fetch daily 3-month T-bill rate from FRED (annualized, in decimal).
-    Ticker TB3MS.
+    Fetch 3-month EURIBOR from FRED as the risk-free rate for European strategies.
+    Ticker: EUR3MTD156N — annualised, in percent.
     """
-    rf = web.DataReader('TB3MS', 'fred', start, end)['TB3MS']
+    rf = web.DataReader('IR3TIB01EZM156N', 'fred', start, end)['IR3TIB01EZM156N']
     rf = rf / 100
     rf = rf.resample('B').ffill()
     return rf / 252
@@ -99,7 +101,7 @@ def perf_stats(returns: pd.Series, freq: str = 'day', rf: pd.Series | None = Non
     :param rf: risk-free rate
     :param turnover
     :param rebalance_period
-    :return: annualized return, annualized volatility, sharpe ratio, cumulative returns, max drawdown in the period
+    :return: annualized return, annualized volatility, sharpe ratio, sortino, calmar, cumulative returns, max drawdown in the period
      and annual turnover
     """
     if freq == 'day':
@@ -186,7 +188,7 @@ def factor_decomposition(port_rets: pd.Series, bmark_rets: pd.Series,
 def benchmark_long_only_equal_weight(prices: pd.DataFrame):
     """
     Long-only equal-weight benchmark over the same universe and date range
-    as the momentum strategy. Rebalances monthly to maintain equal weights.
+    as the momentum strategy. Maintain equal weights throughout the period.
     No transaction costs applied (benchmark assumed frictionless).
 
     Returns daily portfolio returns as a pd.Series.

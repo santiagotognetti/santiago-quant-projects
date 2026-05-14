@@ -9,8 +9,8 @@ from data import get_tickers, load_prices
 def lookback_sensitivity(
     prices: pd.DataFrame,
     lookback_grid: list[int] = [21, 42, 62, 126, 189, 252, 315, 378],
-    topk: int = 25,
     rebalance_period: int = 21,
+    topk:  int = 10,
     tc_per_unit: float = 0.001,
     max_weight: float = 0.2,
     rf: pd.Series | None = None,
