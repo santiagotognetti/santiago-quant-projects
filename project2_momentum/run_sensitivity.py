@@ -27,18 +27,21 @@ def lookback_sensitivity(
     :return: sensitivity parameter for lookback period
     """
     results = []
-
+    max_warmup = max(lookback_grid) + 21
+    eval_start = prices.index[max_warmup]
     for lb in lookback_grid:
         print(f"  Running lookback = {lb} days")
         port_rets, _, turnover = momentum_long_short(
-            prices, lb, topk,
-            rebalance_period, tc_per_unit, max_weight
+            prices, lb, topk, rebalance_period, tc_per_unit, max_weight
         )
+        port_rets = port_rets[eval_start:]  # ← slice to common window
+
         stats = perf_stats(
-            port_rets, freq='day', rf=rf, turnover=turnover, rebalance_period=rebalance_period
+            port_rets, freq='day', rf=rf,
+            turnover=turnover, rebalance_period=rebalance_period
         )
         stats["lookback_days"] = lb
-        stats["lookback_months"] = round(lb/21)
+        stats["lookback_months"] = round(lb / 21)
         results.append(stats)
 
     return pd.DataFrame(results).set_index("lookback_days")

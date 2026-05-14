@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 def simulate_intraday(n_days: int = 5000, minutes_per_day: int = 390, seed: int = 42) -> pd.DataFrame:
     """
@@ -71,29 +70,5 @@ def perf_stats(returns, freq='min'):
         "max_drawdown": maxdd
     }
 
-def run_demo():
-    df = simulate_intraday(n_days=12)
-    df = signal_and_backtest(df, z_window=60, z_thresh=1.0, round_trip_cost=0.0005)
+def build_trade_log():
 
-    stats = perf_stats(df['strategy_ret'], freq='min')
-    cum = (1 + df['strategy_ret']).cumprod() - 1
-
-    print("Sample rows:")
-    print(df[['mid','ret','imbalance','imb_z','signal','pos','strategy_ret']].head(12).to_string())
-
-    print("\nPerformance (synthetic):")
-    for k,v in stats.items():
-        print(f"  {k}: {v:.6f}")
-
-    # Plot cumulative returns
-    plt.figure(figsize=(10,4))
-    plt.plot(cum.index, cum.values)
-    plt.title("Project1 (Synthetic): Intraday strategy cumulative return")
-    plt.xlabel("Time")
-    plt.ylabel("Cumulative return")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-if __name__ == "__main__":
-    run_demo()
