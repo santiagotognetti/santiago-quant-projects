@@ -61,7 +61,7 @@ def perf_stats(returns, freq='min'):
     mean = returns.mean() * ann_factor
     vol = returns.std() * np.sqrt(ann_factor)
     sharpe = mean/vol if vol > 0 else np.nan
-    cum = (1 + returns).cumprod() - 1
+    cum = (1 + returns).cumprod()
     maxdd = (cum.cummax() - cum).max()
     return {
         "annualized_return": mean,
