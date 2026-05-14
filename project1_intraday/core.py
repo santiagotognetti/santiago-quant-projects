@@ -48,24 +48,14 @@ def simulate_intraday(n_days: int = 252, minutes_per_day: int = 390, seed: int =
     return pd.concat(all_rows)
 
 def compute_signal(df: pd.DataFrame, z_window: int = 60, z_thresh: float = 1.0) -> pd.DataFrame:
-    """
-    Compute rolling z-score of order-flow imbalance, calculated per trading day
-    to prevent overnight contamination.
-
-    Signal logic (mean-reversion):
-        imb_z >  z_thresh  →  -1  (extreme buy pressure, expected to revert)
-        imb_z < -z_thresh  →  +1  (extreme sell pressure, expected to revert)
-    """
     df = df.copy()
+    df["imb_z"] = 0.0
 
-    def day_zscore(group):
+    for date, group in df.groupby(df.index.date):
+        idx = group.index
         rm = group["imbalance"].rolling(z_window, min_periods=1).mean()
         rs = group["imbalance"].rolling(z_window, min_periods=1).std().replace(0, 1e-8)
-        group = group.copy()
-        group["imb_z"] = (group["imbalance"] - rm) / rs
-        return group
-
-    df = df.groupby(df.index.date, group_keys=False).apply(day_zscore)
+        df.loc[idx, "imb_z"] = ((group["imbalance"] - rm) / rs).values
 
     df["signal"] = 0
     df.loc[df["imb_z"] >  z_thresh, "signal"] = -1
@@ -104,6 +94,9 @@ def perf_stats(returns: pd.Series, freq: str = "min", rf: float = 0.0) -> dict:
     :param freq: 'min' for 1-minute bars, 'day' for daily
     :param rf: annualised risk-free rate
     """
+    if len(returns) == 0:
+        raise ValueError("perf_stats received an empty returns Series. "
+                         "Check that df_train is not empty after slicing.")
     ann_factor = 252 * 390 if freq == "min" else 252
     rf_per_bar = (1 + rf) ** (1 / ann_factor) - 1
     excess     = returns - rf_per_bar

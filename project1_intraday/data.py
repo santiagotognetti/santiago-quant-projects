@@ -130,7 +130,7 @@ def prepare_bars(
     # Spread proxy: (high - low) / close
     df["spread"] = (df["high"] - df["low"]) / df["close"]
 
+
     return df[["open", "high", "low", "close", "volume", "vwap",
                "ret", "imbalance", "spread"]]
-
 

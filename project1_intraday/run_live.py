@@ -1,15 +1,19 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+
 from pathlib import Path
 from data import fetch_polygon_minute_bars, prepare_bars
 from core import compute_signal, backtest, perf_stats, build_trade_log
 
+
+
+
 DATA_DIR    = Path(__file__).parent / "Data"
 TICKER      = "SPY"
-TRAIN_START = "2022-01-01"
-TRAIN_END   = "2023-12-31"
-TEST_START  = "2024-01-01"
+TRAIN_START = "2024-05-15"
+TRAIN_END   = "2024-10-31"
+TEST_START  = "2024-11-01"
 TEST_END    = "2024-12-31"
 
 def run_sensitivity(df_train: pd.DataFrame) -> pd.DataFrame:
@@ -53,9 +57,13 @@ def run_live():
         api_key=api_key,
         cache_dir=DATA_DIR,
     )
+    raw.index = raw.index.tz_localize(None)
     df = prepare_bars(raw)
+    print(f"df date range: {df.index.min()} → {df.index.max()}")  #debugging
+    print(df.index[:3])  #debugging
     df_train = df[TRAIN_START:TRAIN_END]
-    df_test  = df[TEST_START:TEST_END]
+    df_test = df[TEST_START:TEST_END]
+    print(f"Index dtype: {df.index.dtype}")  # should say datetime64[ns], not datetime64[ns, America/New_York]
     print(f"Train: {len(df_train):,} bars  |  Test: {len(df_test):,} bars")
 
     # ── In-sample parameter search ───────────────────────────────────────
