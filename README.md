@@ -155,6 +155,14 @@ drawdown control more heavily might prefer 6 months.
 The optimal lookback (189 days) was selected purely on in-sample Sharpe and
 applied without modification to the out-of-sample test period (2018–2020).
 
+
+
+**Future Work**
+
+Beta-weighting positions
+
+
+
 --
 
 
@@ -167,12 +175,5 @@ applied without modification to the out-of-sample test period (2018–2020).
 
 --
 
-**Future Work**
-
-Implement market microstructure models using real LOB or tick data.
-Build intraday volatility forecasting models (HAR, GARCH).
-Experiment with optimization-based portfolio construction (risk parity, volatility targeting).
-
-If you find this repository useful or would like to discuss quant internships, feel free to reach out.
 
 
