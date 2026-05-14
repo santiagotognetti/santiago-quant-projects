@@ -69,15 +69,3 @@ def load_prices(tickers: list[str], start: str, end: str) -> pd.DataFrame:
     print(f"Loaded {prices.shape[1]} stocks, {prices.shape[0]} trading days.")
     return prices
 
-def benchmark_long_only_equal_weight(prices: pd.DataFrame):
-    """
-       Long-only equal-weight benchmark over the same universe and date range
-       as the momentum strategy. Rebalances monthly to maintain equal weights.
-       No transaction costs applied (benchmark assumed frictionless).
-
-       Returns daily portfolio returns as a pd.Series.
-       """
-    rets = prices.pct_change().fillna(0)
-    n = prices.shape[1]
-    weight = 1.0 / n
-    return rets.mul(weight).sum(axis=1)

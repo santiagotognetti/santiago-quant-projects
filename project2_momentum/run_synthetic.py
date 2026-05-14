@@ -5,7 +5,7 @@ import datetime as dt
 from core import (momentum_long_short, perf_stats, factor_decomposition,
                   benchmark_long_only_equal_weight, get_risk_free_rate)
 
-def simulate_cross_section(n_stocks=500, n_days=5200):
+def simulate_cross_section(start,n_stocks=500, n_days=5200):
     """
     Simulate cross sectional price data stochastically.
     :param n_stocks: number of tickers to simulate
@@ -17,18 +17,18 @@ def simulate_cross_section(n_stocks=500, n_days=5200):
     sigma_market = 0.15 / np.sqrt(252)
     sigma_idio = 0.20 / np.sqrt(252)
     stock_drifts = rng.uniform(-0.0003, 0.0003, size=n_stocks)
-    market = np.random.normal(loc=mu, scale=sigma_market, size=n_days)
-    idios = np.random.normal(loc=0, scale=sigma_idio, size=(n_days, n_stocks))
+    market = rng.normal(loc=mu, scale=sigma_market, size=n_days)
+    idios = rng.normal(loc=0, scale=sigma_idio, size=(n_days, n_stocks))
     returns = market.reshape(-1, 1) + idios + stock_drifts.reshape(1, -1)
     prices = 100 * np.exp(np.cumsum(returns, axis=0))
-    dates = pd.date_range(start="2010-01-01", periods=n_days, freq='B')
+    dates = pd.date_range(start=start, periods=n_days, freq='B')
     df_prices = pd.DataFrame(prices, index=dates, columns=[f"S{i}" for i in range(n_stocks)])
     return df_prices
 
 def run_synthetic():
-    start = "2000-01-01"
+    start = "2010-01-01"
     end = dt.date.today()
-    prices = simulate_cross_section(n_stocks=500, n_days=5200)
+    prices = simulate_cross_section(start=start, n_stocks=500, n_days=5200)
     rf = get_risk_free_rate(start=start, end=end)
 
     # Momentum strategy
