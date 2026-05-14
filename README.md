@@ -89,25 +89,33 @@ python project2_momentum/run_sensitivity.py
 
 | Metric | L/S Momentum | EW Benchmark |
 |---|---|---|
-| Annualised Return | 0.51% | 8.74% |
-| Annualised Volatility | 19.47% | 11.76% |
-| Sharpe Ratio | 0.03 | 0.74 |
-| Sortino | 0.04 | 1.03 |
-| Calmar | 0.02 | 0.54 |
-| Cumulative Return | 1.26% | 21.98% |
-| Max Drawdown | 28.50% | 16.32% |
-| Annual Turnover | 4.87× | — |
+| Annualised Return | 2.43% | 11.25% |
+| Annualised Volatility | 19.46% | 11.78% |
+| Sharpe Ratio | 0.12 | 0.95 |
+| Sortino | 0.18 | 1.33 |
+| Calmar | 0.08 | 0.69 |
+| Cumulative Return | 0.33% | 21.83% |
+| Max Drawdown | 28.69% | 16.37% |
+| Annual Turnover | 9.39× | — |
 
 The out-of-sample period (2018–2020) coincides with two well-documented momentum
 crash episodes: the Q4 2018 global equity selloff driven by Fed tightening and
 trade war escalation, followed by a sharp, sudden reversal rally in Q1 2019.
 Cross-sectional momentum strategies are structurally vulnerable to this pattern —
 the short book is concentrated in previously underperforming stocks, which tend to
-rebound most aggressively in a recovery. The strategy's 34.8% max drawdown versus
-17.8% for the equal-weight benchmark reflects this exposure.
+rebound most aggressively in a recovery. The strategy's 28.7% max drawdown versus
+16.4% for the equal-weight benchmark reflects this exposure.
+
+The CAPM decomposition yields an annualised alpha of 4.6% (t = 0.33, p = 0.739),
+which is not statistically significant — returns over this period are not
+explained by market exposure either, given a market beta of –0.19. The low
+R-squared of 0.013 confirms the strategy is largely market-neutral, as intended.
+These results are consistent with the broader academic evidence on momentum crashes
+(Daniel & Moskowitz, 2016). In-sample performance (2010–2018) is reported
+separately in the sensitivity analysis section.
 
 These results are consistent with the broader academic evidence on momentum crashes
-(Daniel & Moskowitz, 2016). The high annual turnover of 4.87× also indicates that
+(Daniel & Moskowitz, 2016). The high annual turnover of 9.39× also indicates that
 transaction costs are a meaningful drag in a volatile, low-signal environment.
 In-sample performance (2010–2018) is reported separately in the sensitivity
 analysis section.
@@ -115,21 +123,23 @@ analysis section.
 ### Lookback Sensitivity Analysis (In-Sample: 2010–2018)
 
 The strategy was evaluated across eight lookback horizons to identify the
-optimal momentum formation period before the out-of-sample test window. In-sample (2010–2018), the strategy achieved a Sharpe of 1.08 at a 189-day lookback with 30% annualised return net of costs.
+optimal momentum formation period before the out-of-sample test window.
+In-sample (2010–2018), the strategy achieved a Sharpe of 1.06 at a 189-day
+lookback with 29.4% annualised return net of costs.
 
 | Lookback (days) | Months | Sharpe | Sortino | Calmar | Ann. Return | Max Drawdown | Ann. Turnover |
 |---|---|---|---|---|---|---|---|
-| 21 | 1 | –0.11 | –0.15 | –0.04 | –2.59% | 61.93% | 11.01× |
-| 42 | 2 | 0.56 | 0.80 | 0.36 | 14.12% | 38.95% | 8.35× |
-| 62 | 3 | 0.80 | 1.11 | 0.65 | 20.56% | 31.59% | 7.02× |
-| 126 | 6 | 1.05 | 1.50 | 0.95 | 29.51% | 31.01% | 4.98× |
-| **189** | **9** | **1.08** | **1.56** | **0.90** | **30.02%** | **33.37%** | **3.93×** |
-| 252 | 12 | 1.01 | 1.45 | 0.79 | 27.18% | 34.24% | 3.19× |
-| 315 | 15 | 0.71 | 1.04 | 0.63 | 18.30% | 28.86% | 2.90× |
-| 378 | 18 | 0.45 | 0.66 | 0.36 | 11.50% | 32.09% | 2.56× |
+| 21 | 1 | –0.16 | –0.22 | –0.06 | –3.76% | 63.82% | 21.90× |
+| 42 | 2 | 0.52 | 0.74 | 0.33 | 13.06% | 39.24% | 16.58× |
+| 62 | 3 | 0.77 | 1.06 | 0.62 | 19.60% | 31.66% | 13.91× |
+| 126 | 6 | 1.02 | 1.46 | 0.93 | 28.77% | 31.05% | 9.83× |
+| **189** | **9** | **1.06** | **1.53** | **0.88** | **29.44%** | **33.46%** | **7.72×** |
+| 252 | 12 | 1.00 | 1.42 | 0.78 | 26.74% | 34.30% | 6.25× |
+| 315 | 15 | 0.70 | 1.02 | 0.62 | 17.97% | 29.04% | 5.66× |
+| 378 | 18 | 0.44 | 0.65 | 0.35 | 11.29% | 32.28% | 4.97× |
 
-The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.08
-and Sortino at 1.56, consistent with the Jegadeesh & Titman (1993) finding that
+The **9-month (189-day) lookback** maximises the in-sample Sharpe ratio at 1.06
+and Sortino at 1.53, consistent with the Jegadeesh & Titman (1993) finding that
 intermediate-horizon momentum (6–12 months) dominates short and long-term
 horizons. The 1-month lookback produces negative returns across all three
 risk-adjusted metrics, capturing short-term reversal rather than momentum — a
@@ -137,14 +147,13 @@ well-known empirical regularity. Turnover declines monotonically with lookback
 length, as longer formation windows generate more stable rankings and require
 fewer position changes at each rebalance.
 
-Note that the Calmar ratio peaks at 6 months (0.95) rather than 9 months (0.90),
+Note that the Calmar ratio peaks at 6 months (0.93) rather than 9 months (0.88),
 reflecting a slightly lower max drawdown at that horizon. The 9-month lookback
 was selected on Sharpe as the primary criterion; a practitioner weighting
 drawdown control more heavily might prefer 6 months.
 
 The optimal lookback (189 days) was selected purely on in-sample Sharpe and
 applied without modification to the out-of-sample test period (2018–2020).
-
 
 --
 
