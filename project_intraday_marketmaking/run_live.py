@@ -60,7 +60,8 @@ def run_live():
         api_key=api_key,
         cache_dir=DATA_DIR,
     )
-    raw.index = raw.index.tz_localize(None)
+    if raw.index.tz is not None:
+        raw.index = raw.index.tz_convert("America/New_York").tz_localize(None)
     df = prepare_bars(raw)
     print(f"df date range: {df.index.min()} → {df.index.max()}")
     print(df.index[:3])

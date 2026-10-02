@@ -25,9 +25,10 @@ def run_european():
     port_rets = port_rets[start_eval:]
     bmark_rets = benchmark_long_only_equal_weight(prices)[start_eval:]
     rf = rf[start_eval:]
+    turnover_oos = turnover[start_eval:]
     # Stats reporting
     stats_port = perf_stats(port_rets, freq='day',
-                            rf=rf, turnover=turnover, rebalance_period=21)
+                            rf=rf, turnover=turnover_oos, rebalance_period=21)
     stats_bmark = perf_stats(bmark_rets, freq='day', rf=rf, turnover=[0], rebalance_period=21)
     print(f"{'Metric':<22} {'Momentum':>12} {'EW Benchmark':>14}")
     print("-" * 50)

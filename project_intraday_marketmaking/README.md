@@ -57,8 +57,8 @@ Polygon 1-min bars
 |---|---|
 | Confirmation | Signal must persist for 2 consecutive bars before entry |
 | Entry timing | Position entered on the bar after signal confirmation |
-| Stop-loss | Per-trade cumulative PnL exit at −0.15% (configurable) |
-| End of day | Flat all positions at session close |
+| Stop-loss | Per-trade cumulative PnL exit; stop-bar PnL kept, then flat until signal clears |
+| End of day | EOD signal zeroed — no overnight carry into the next open |
 | Costs | Half-spread proxy deducted on each position change |
 
 ---

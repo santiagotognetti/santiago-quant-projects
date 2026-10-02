@@ -24,7 +24,8 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
 
     rebalance_days = list(range(0, len(prices), rebalance_period))
     portfolio_rets = []
-    turnover = []
+    turnover_vals = []
+    turnover_dates = []
     positions_store = []
 
     prev_pos = pd.Series(0.0, index=prices.columns)
@@ -33,9 +34,21 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
         start = i
         end = min(i+rebalance_period, len(prices)-1)
         mom_scores = momentum.iloc[start].dropna()
+        period_rets = rets.iloc[start+1:end+1]
 
         if len(mom_scores) < 2 * topk:
-            prev_pos = pd.Series(0.0, index=prices.columns)
+            # Stay flat for this window — keep calendar continuity and charge unwind
+            pos = pd.Series(0.0, index=prices.columns)
+            tr = pos.subtract(prev_pos).abs().sum() / 2
+            daily_port_returns = pd.Series(0.0, index=period_rets.index)
+            tc = tr * tc_per_unit
+            if len(daily_port_returns) > 0:
+                daily_port_returns.iloc[0] -= tc
+            turnover_vals.append(tr)
+            turnover_dates.append(prices.index[start])
+            portfolio_rets.append(daily_port_returns)
+            positions_store.append(pos)
+            prev_pos = pos.copy()
             continue
 
         top = mom_scores.nlargest(topk).index.tolist()
@@ -62,10 +75,10 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
         # turnover proportional to changes in absolute position
 
         tr = pos.subtract(prev_pos).abs().sum() / 2
-        turnover.append(tr)
+        turnover_vals.append(tr)
+        turnover_dates.append(prices.index[start])
 
         # apply daily returns for holding period
-        period_rets = rets.iloc[start+1:end+1]
         daily_port_returns = (period_rets * pos).sum(axis=1)
 
         # simple transaction cost hit on rebalance (applied once per rebalance)
@@ -79,6 +92,7 @@ def momentum_long_short(prices, lookback, topk, rebalance_period, tc_per_unit, m
         prev_pos = pos.copy()
 
     portfolio_rets = pd.concat(portfolio_rets)
+    turnover = pd.Series(turnover_vals, index=pd.DatetimeIndex(turnover_dates), name="turnover")
     return portfolio_rets, positions_store, turnover
 
 def get_risk_free_rate(start: str, end: str) -> pd.Series:
@@ -183,7 +197,7 @@ def factor_decomposition(port_rets: pd.Series, bmark_rets: pd.Series,
     if model.pvalues["const"] < 0.05:
         print(f"  ✓ Alpha is statistically significant — strategy adds value beyond market exposure.")
     else:
-        print(f"  ✗ Alpha is NOT significant — returns are explained by market beta alone.")
+        print(f"  ✗ Alpha is NOT significant — no evidence of alpha beyond the CAPM residual.")
 
     return {
         "alpha_annualized": alpha_ann,
